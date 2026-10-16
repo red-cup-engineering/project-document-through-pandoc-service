@@ -3,7 +3,21 @@
   "version": "0.1.0",
   "type": "module",
   "description": "Plan and execute a caller-scoped Pandoc document projection without owning document discovery, Git state, or publication routes.",
-  "exports": { ".": "./src/project-document-through-pandoc.mjs" },
-  "files": ["src", "package.json"],
-  "engines": { "node": ">=22" }
+  "exports": {
+    ".": "./src/project-document-through-pandoc.mjs"
+  },
+  "files": [
+    "src",
+    "bin",
+    "package.json"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "bin": {
+    "publish-book": "./bin/publish-book"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.mjs"
+  }
 }

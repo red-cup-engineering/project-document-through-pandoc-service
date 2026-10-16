@@ -131,6 +131,22 @@ if [ ! -f "$SOURCE" ]; then
   exit 2
 fi
 
+# Historical compatibility supports a user-chosen output directory, but
+# an output *name* must not escape it or make multiple releases collide.
+case "$BASENAME" in
+  ""|.|..|*/*|*\\*)
+    echo "basename must be a single filename component" >&2
+    exit 2;;
+esac
+case "$PDF_ENGINE" in
+  xelatex|lualatex|pdflatex) ;;
+  *) echo "unsupported pdf engine: $PDF_ENGINE" >&2; exit 2;;
+esac
+if [ "$DO_PDF" -eq 0 ] && [ "$DO_HTML" -eq 0 ]; then
+  echo "at least one output format is required" >&2
+  exit 2
+fi
+
 if ! command -v pandoc >/dev/null 2>&1; then
   echo "pandoc not found on PATH" >&2
   exit 127
@@ -139,6 +155,10 @@ fi
 mkdir -p "$OUTDIR"
 
 LOG="$OUTDIR/build.log"
+# Fabricate in a private sibling directory. If Pandoc fails, existing
+# accepted outputs remain untouched; the failure still has build.log.
+STAGING="$(mktemp -d "$OUTDIR/.publish-book.XXXXXXXX")"
+trap 'rm -rf "$STAGING"' EXIT
 {
   echo "== publish-book =="
   echo "source: $SOURCE"
@@ -159,7 +179,7 @@ if [ "$DO_HTML" -eq 1 ]; then
     pandoc "$SOURCE" \
       --standalone \
       --metadata title="$BASENAME" \
-      -o "$OUTDIR/$BASENAME.html"
+      -o "$STAGING/$BASENAME.html"
     echo
   } >>"$LOG" 2>&1
 fi
@@ -170,7 +190,17 @@ if [ "$DO_PDF" -eq 1 ]; then
     pandoc "$SOURCE" \
       --metadata title="$BASENAME" \
       --pdf-engine="$PDF_ENGINE" \
-      -o "$OUTDIR/$BASENAME.pdf"
+      -o "$STAGING/$BASENAME.pdf"
     echo
   } >>"$LOG" 2>&1
 fi
+
+# Select the fabricated outputs only after both requested projections pass.
+# Git/CI/publication acceptance is independent of these local file moves.
+if [ "$DO_HTML" -eq 1 ]; then
+  mv "$STAGING/$BASENAME.html" "$OUTDIR/$BASENAME.html"
+fi
+if [ "$DO_PDF" -eq 1 ]; then
+  mv "$STAGING/$BASENAME.pdf" "$OUTDIR/$BASENAME.pdf"
+fi
+printf '== local conversion finished ==\n' >>"$LOG"
