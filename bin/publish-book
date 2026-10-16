@@ -1,0 +1,206 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  cat <<'EOF'
+Usage:
+  publish-book --source PATH --outdir DIR --basename NAME [--pdf-engine xelatex|lualatex|pdflatex] [--no-pdf] [--no-html]
+  publish-book --repo DIR --outroot DIR [--pdf-engine xelatex|lualatex|pdflatex] [--no-pdf] [--no-html]
+
+Outputs:
+  DIR/NAME.html  (unless --no-html)
+  DIR/NAME.pdf   (unless --no-pdf)
+  DIR/build.log  (always)
+
+Notes:
+  - Requires `pandoc` on PATH.
+  - For Unicode-heavy PDFs, prefer `--pdf-engine xelatex` (default).
+EOF
+}
+
+SOURCE=""
+OUTDIR=""
+OUTROOT=""
+BASENAME=""
+REPO_DIR=""
+PDF_ENGINE="xelatex"
+DO_PDF=1
+DO_HTML=1
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --source)
+      SOURCE="${2:-}"; shift 2;;
+    --repo)
+      REPO_DIR="${2:-}"; shift 2;;
+    --outdir)
+      OUTDIR="${2:-}"; shift 2;;
+    --outroot)
+      OUTROOT="${2:-}"; shift 2;;
+    --basename)
+      BASENAME="${2:-}"; shift 2;;
+    --pdf-engine)
+      PDF_ENGINE="${2:-}"; shift 2;;
+    --no-pdf)
+      DO_PDF=0; shift 1;;
+    --no-html)
+      DO_HTML=0; shift 1;;
+    -h|--help)
+      usage; exit 0;;
+    *)
+      echo "unknown argument: $1" >&2
+      usage >&2
+      exit 2;;
+  esac
+done
+
+read_semantics_yaml() {
+  local semantics_path="$1"
+  if [ ! -f "$semantics_path" ]; then
+    echo "semantics.yaml not found: $semantics_path" >&2
+    exit 2
+  fi
+
+  # Minimal YAML subset parser:
+  # - supports `book:` block with `source:` and optional `basename:`
+  # - supports `publish:` block with optional `slug:`
+  local section=""
+  local book_source=""
+  local book_basename=""
+  local publish_slug=""
+
+  while IFS= read -r line; do
+    # strip comments
+    line="${line%%#*}"
+    # trim whitespace
+    line="$(printf '%s' "$line" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+    [ -z "$line" ] && continue
+
+    case "$line" in
+      book:)
+        section="book"; continue;;
+      publish:)
+        section="publish"; continue;;
+    esac
+
+    case "$section:$line" in
+      book:source:*)
+        book_source="${line#source:}"; book_source="$(printf '%s' "$book_source" | sed -e 's/^[[:space:]]*//')";;
+      book:basename:*)
+        book_basename="${line#basename:}"; book_basename="$(printf '%s' "$book_basename" | sed -e 's/^[[:space:]]*//')";;
+      publish:slug:*)
+        publish_slug="${line#slug:}"; publish_slug="$(printf '%s' "$publish_slug" | sed -e 's/^[[:space:]]*//')";;
+    esac
+  done <"$semantics_path"
+
+  if [ -z "$book_source" ]; then
+    echo "semantics.yaml missing required key: book.source" >&2
+    exit 2
+  fi
+
+  SOURCE="$REPO_DIR/$book_source"
+
+  if [ -n "$publish_slug" ]; then
+    BASENAME="$publish_slug"
+  elif [ -n "$book_basename" ]; then
+    BASENAME="$book_basename"
+  else
+    BASENAME="$(basename "$REPO_DIR")"
+  fi
+}
+
+if [ -n "$REPO_DIR" ]; then
+  if [ -z "$OUTROOT" ]; then
+    echo "--repo requires --outroot" >&2
+    usage >&2
+    exit 2
+  fi
+  if [ -z "$OUTDIR" ]; then
+    OUTDIR="$OUTROOT/$(basename "$REPO_DIR")"
+  fi
+  read_semantics_yaml "$REPO_DIR/semantics.yaml"
+fi
+
+if [ -z "$SOURCE" ] || [ -z "$OUTDIR" ] || [ -z "$BASENAME" ]; then
+  usage >&2
+  exit 2
+fi
+
+if [ ! -f "$SOURCE" ]; then
+  echo "source file not found: $SOURCE" >&2
+  exit 2
+fi
+
+# Historical compatibility supports a user-chosen output directory, but
+# an output *name* must not escape it or make multiple releases collide.
+case "$BASENAME" in
+  ""|.|..|*/*|*\\*)
+    echo "basename must be a single filename component" >&2
+    exit 2;;
+esac
+case "$PDF_ENGINE" in
+  xelatex|lualatex|pdflatex) ;;
+  *) echo "unsupported pdf engine: $PDF_ENGINE" >&2; exit 2;;
+esac
+if [ "$DO_PDF" -eq 0 ] && [ "$DO_HTML" -eq 0 ]; then
+  echo "at least one output format is required" >&2
+  exit 2
+fi
+
+if ! command -v pandoc >/dev/null 2>&1; then
+  echo "pandoc not found on PATH" >&2
+  exit 127
+fi
+
+mkdir -p "$OUTDIR"
+
+LOG="$OUTDIR/build.log"
+# Fabricate in a private sibling directory. If Pandoc fails, existing
+# accepted outputs remain untouched; the failure still has build.log.
+STAGING="$(mktemp -d "$OUTDIR/.publish-book.XXXXXXXX")"
+trap 'rm -rf "$STAGING"' EXIT
+{
+  echo "== publish-book =="
+  echo "source: $SOURCE"
+  echo "outdir: $OUTDIR"
+  echo "basename: $BASENAME"
+  echo "pdf_engine: $PDF_ENGINE"
+  echo "html: $DO_HTML"
+  echo "pdf: $DO_PDF"
+  echo
+  echo "== pandoc =="
+  pandoc --version
+  echo
+} >"$LOG" 2>&1
+
+if [ "$DO_HTML" -eq 1 ]; then
+  {
+    echo "== build html =="
+    pandoc "$SOURCE" \
+      --standalone \
+      --metadata title="$BASENAME" \
+      -o "$STAGING/$BASENAME.html"
+    echo
+  } >>"$LOG" 2>&1
+fi
+
+if [ "$DO_PDF" -eq 1 ]; then
+  {
+    echo "== build pdf =="
+    pandoc "$SOURCE" \
+      --metadata title="$BASENAME" \
+      --pdf-engine="$PDF_ENGINE" \
+      -o "$STAGING/$BASENAME.pdf"
+    echo
+  } >>"$LOG" 2>&1
+fi
+
+# Select the fabricated outputs only after both requested projections pass.
+# Git/CI/publication acceptance is independent of these local file moves.
+if [ "$DO_HTML" -eq 1 ]; then
+  mv "$STAGING/$BASENAME.html" "$OUTDIR/$BASENAME.html"
+fi
+if [ "$DO_PDF" -eq 1 ]; then
+  mv "$STAGING/$BASENAME.pdf" "$OUTDIR/$BASENAME.pdf"
+fi
+printf '== local conversion finished ==\n' >>"$LOG"
