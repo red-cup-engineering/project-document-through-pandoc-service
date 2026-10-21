@@ -4,8 +4,8 @@ set -euo pipefail
 usage() {
   cat <<'EOF'
 Usage:
-  publish-book --source PATH --outdir DIR --basename NAME [--pdf-engine xelatex|lualatex|pdflatex] [--no-pdf] [--no-html]
-  publish-book --repo DIR --outroot DIR [--pdf-engine xelatex|lualatex|pdflatex] [--no-pdf] [--no-html]
+  publish-book --source PATH --outdir DIR --basename NAME [--pdf-engine xelatex|lualatex|pdflatex] [--math-single-backslash] [--no-pdf] [--no-html]
+  publish-book --repo DIR --outroot DIR [--pdf-engine xelatex|lualatex|pdflatex] [--math-single-backslash] [--no-pdf] [--no-html]
 
 Outputs:
   DIR/NAME.html  (unless --no-html)
@@ -15,6 +15,7 @@ Outputs:
 Notes:
   - Requires `pandoc` on PATH.
   - For Unicode-heavy PDFs, prefer `--pdf-engine xelatex` (default).
+  - For Obsmetrologia manuscripts using \(...\) or \[...\], use --math-single-backslash.
 EOF
 }
 
@@ -26,6 +27,7 @@ REPO_DIR=""
 PDF_ENGINE="xelatex"
 DO_PDF=1
 DO_HTML=1
+MATH_SINGLE_BACKSLASH=0
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -45,6 +47,8 @@ while [ $# -gt 0 ]; do
       DO_PDF=0; shift 1;;
     --no-html)
       DO_HTML=0; shift 1;;
+    --math-single-backslash)
+      MATH_SINGLE_BACKSLASH=1; shift 1;;
     -h|--help)
       usage; exit 0;;
     *)
@@ -152,6 +156,10 @@ if ! command -v pandoc >/dev/null 2>&1; then
   exit 127
 fi
 
+FROM_ARGS=()
+if [ "$MATH_SINGLE_BACKSLASH" -eq 1 ]; then
+  FROM_ARGS=(--from=markdown+tex_math_single_backslash)
+fi
 mkdir -p "$OUTDIR"
 
 LOG="$OUTDIR/build.log"
@@ -165,6 +173,7 @@ trap 'rm -rf "$STAGING"' EXIT
   echo "outdir: $OUTDIR"
   echo "basename: $BASENAME"
   echo "pdf_engine: $PDF_ENGINE"
+  echo "math_single_backslash: $MATH_SINGLE_BACKSLASH"
   echo "html: $DO_HTML"
   echo "pdf: $DO_PDF"
   echo
@@ -176,7 +185,7 @@ trap 'rm -rf "$STAGING"' EXIT
 if [ "$DO_HTML" -eq 1 ]; then
   {
     echo "== build html =="
-    pandoc "$SOURCE" \
+    pandoc "$SOURCE" "${FROM_ARGS[@]}" \
       --standalone \
       --metadata title="$BASENAME" \
       -o "$STAGING/$BASENAME.html"
@@ -187,7 +196,7 @@ fi
 if [ "$DO_PDF" -eq 1 ]; then
   {
     echo "== build pdf =="
-    pandoc "$SOURCE" \
+    pandoc "$SOURCE" "${FROM_ARGS[@]}" \
       --metadata title="$BASENAME" \
       --pdf-engine="$PDF_ENGINE" \
       -o "$STAGING/$BASENAME.pdf"
