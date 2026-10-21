@@ -3,6 +3,8 @@ import { dirname, resolve } from "node:path";
 import { mkdirSync } from "node:fs";
 
 const supportedFormats = new Set(["html", "pdf", "markdown"]);
+// Pandoc reader identifiers, rather than a homegrown math parser or guessed extension.
+const supportedReaders = new Set(["markdown", "markdown+tex_math_single_backslash"]);
 
 function checkPath(value, name) {
   if (typeof value !== "string" || value.trim() === "") throw new TypeError(`${name} must be a non-empty path`);
@@ -10,11 +12,13 @@ function checkPath(value, name) {
 }
 
 /** Plan one explicit document projection.  Discovery and release policy stay with the caller. */
-export function planPandocDocumentProjection({ sourcePath, outputPath, format, metadata = {}, templatePath, stylesheetPath, pdfEngine } = {}) {
+export function planPandocDocumentProjection({ sourcePath, outputPath, format, metadata = {}, templatePath, stylesheetPath, pdfEngine, reader } = {}) {
   const source = checkPath(sourcePath, "sourcePath"), output = checkPath(outputPath, "outputPath");
   if (!supportedFormats.has(format)) throw new TypeError(`format must be one of ${[...supportedFormats].join(", ")}`);
   if (!metadata || typeof metadata !== "object" || Array.isArray(metadata) || Object.values(metadata).some((value) => typeof value !== "string")) throw new TypeError("metadata must be a string-valued object");
+  if (reader !== undefined && !supportedReaders.has(reader)) throw new TypeError("unsupported Pandoc input reader");
   const args = [source, "--output", output, "--standalone"];
+  if (reader !== undefined) args.push("--from", reader);
   if (format === "pdf" && pdfEngine !== undefined) {
     if (typeof pdfEngine !== "string" || pdfEngine.trim() === "") throw new TypeError("pdfEngine must be a non-empty string");
     args.push(`--pdf-engine=${pdfEngine}`);

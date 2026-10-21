@@ -20,6 +20,21 @@ Original repository manifest (only `book.source`, optional `book.basename`, and 
 bin/publish-book --repo /path/to/manuscript-repo --outroot /path/to/builds
 ```
 
-Optional `--no-html`, `--no-pdf`, and `--pdf-engine xelatex|lualatex|pdflatex` preserve the CLI contract. Both requested outputs are fabricated in one temporary output-directory sibling, then selected only if all requested Pandoc invocations succeed. Invalid output basenames, unsupported engine names and requests for zero output formats are refused. The log remains in `<outdir>/build.log` on success or failure. A failed conversion cannot replace the previously produced artifacts. This local arrangement does not claim atomicity for filesystem failures between the two final moves; consumers still need an independent acceptance gate.
+Optional `--math-single-backslash`, `--no-html`, `--no-pdf`, and `--pdf-engine xelatex|lualatex|pdflatex` preserve the CLI contract. Both requested outputs are fabricated in one temporary output-directory sibling, then selected only if all requested Pandoc invocations succeed. Invalid output basenames, unsupported engine names and requests for zero output formats are refused. The log remains in `<outdir>/build.log` on success or failure. A failed conversion cannot replace the previously produced artifacts. This local arrangement does not claim atomicity for filesystem failures between the two final moves; consumers still need an independent acceptance gate.
 
 Requirements: Bash, coreutils (`sed`, `mktemp`, `mv`), Pandoc, and the selected PDF TeX engine. Package `bin` exposes `publish-book`, and `node --test test/publish-book.test.mjs` exercises its command-line contract with a **fake Pandoc only**; actual conversions require real Pandoc and receiver qualification. This repository does not activate the old unpinned GitHub Actions workflow, upload release artifacts, implement multi-paper publishing, or certify Lean proofs. The unsatisfied future contract stays with the original [paper publishing request](https://github.com/emsenn/2025-12-19-pandoc-publishing/issues/1), not as a new parallel publishing service.
+
+
+## 20 October 2026: exact math reader selection for research papers
+
+An actual [Obsmetrologia research manuscript](https://github.com/lenticule-science/obsmetrologia/blob/main/docs/preprints/02-feathers-fleets-and-farms-finite-fibers.md) writes TeX math as `\(x\)` and `\[x\]`. Pandoc's default Markdown reader does not enable its built-in `tex_math_single_backslash` extension: real XeLaTeX PDF fabrication failed with `Missing $ inserted` on mathematical content. Specifying Pandoc's standard `markdown+tex_math_single_backslash` reader repaired this in a local end-to-end rendering.
+
+For such manuscripts, use the existing published CLI with:
+
+```sh
+bin/publish-book --source manuscript.md --outdir dist --basename paper --math-single-backslash
+```
+
+For a caller that supplies an existing Pandoc projection plan, set `reader: "markdown+tex_math_single_backslash"` on `planPandocDocumentProjection`. Default behavior for previously supported manuscripts is unchanged. An unknown or injected reader is refused. The CLI supplies the same reader to HTML **and** PDF; one output cannot silently interpret math differently from the other.
+
+This repairs a **fabrication** option in the original Red Cup producer, not a DOI, license, editorial admission, public release, or ActivityPub syndication. The existing research-document metadata, Math/Lean and Causeway publication owners retain their responsibilities. The CLI test suite includes valid/default/refusal cases with a fake Pandoc; actual conversion still requires an independently installed Pandoc/TeX host and publication receiving.

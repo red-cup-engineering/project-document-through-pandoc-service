@@ -6,6 +6,8 @@ import { dirname, join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
+import { planPandocDocumentProjection } from "../src/project-document-through-pandoc.mjs";
+
 const script = resolve(dirname(fileURLToPath(import.meta.url)), "../bin/publish-book");
 
 function fixture(fn) {
@@ -17,6 +19,9 @@ function fixture(fn) {
     writeFileSync(mockPandoc, [
       "#!/bin/sh",
       'if [ "$1" = "--version" ]; then echo "pandoc mock 1.0"; exit 0; fi',
+      'if [ "$PANDOC_MOCK_REQUIRE_MATH" = "1" ]; then',
+      '  case "$*" in *--from=markdown+tex_math_single_backslash*) ;; *) echo "missing math reader" >&2; exit 7;; esac',
+      'fi',
       'if [ "$PANDOC_MOCK_FAIL_PDF" = "1" ]; then',
       '  case "$*" in *.pdf*) echo "mock pdf failure" >&2; exit 9;; esac',
       "fi",
@@ -96,4 +101,30 @@ test("missing metadata and missing input are refused", () => fixture(({root, run
   mkdirSync(repo);
   assert.equal(run(["--repo", repo, "--outroot", join(root, "published")]).status, 2);
   assert.equal(run(["--source", join(root, "missing.md"), "--outdir", join(root, "dist"), "--basename", "book"]).status, 2);
+}));
+
+
+test("native math reader is opt-in and source plan rejects unknown input readers", () => {
+  const base = {sourcePath:"/tmp/research.md",outputPath:"/tmp/research.pdf",format:"pdf"};
+  const old = planPandocDocumentProjection(base);
+  assert.equal(old.arguments.includes("--from"), false);
+  const math = planPandocDocumentProjection({...base,reader:"markdown+tex_math_single_backslash"});
+  assert.deepEqual(math.arguments.slice(math.arguments.indexOf("--from"),math.arguments.indexOf("--from")+2),
+    ["--from","markdown+tex_math_single_backslash"]);
+  assert.throws(() => planPandocDocumentProjection({...base,reader:"markdown+raw_tex+unknown"}),
+    /unsupported Pandoc input reader/);
+});
+
+test("CLI passes the opt-in math reader to both HTML and PDF and preserves refusal", () => fixture(({root, source, run}) => {
+  writeFileSync(source, "# A test with \\(a+b\\)\\n");
+  const out = join(root, "math");
+  const args = ["--source",source,"--outdir",out,"--basename","paper"];
+  const refused = run(args, {PANDOC_MOCK_REQUIRE_MATH:"1"});
+  assert.equal(refused.status,7);
+  assert.equal(existsSync(join(out,"paper.pdf")),false);
+  const done = run([...args,"--math-single-backslash"], {PANDOC_MOCK_REQUIRE_MATH:"1"});
+  assert.equal(done.status,0,done.stderr);
+  assert.equal(readFileSync(join(out,"paper.html"),"utf8"),"mock artifact\n");
+  assert.equal(readFileSync(join(out,"paper.pdf"),"utf8"),"mock artifact\n");
+  assert.match(readFileSync(join(out,"build.log"),"utf8"),/math_single_backslash: 1/);
 }));
