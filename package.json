@@ -1,30 +1,48 @@
 {
   "name": "@red-cup-engineering/project-document-through-pandoc-service",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
-  "description": "Plan and execute a caller-scoped Pandoc document projection without owning document discovery, Git state, or publication routes.",
-  "exports": {
-    ".": "./src/project-document-through-pandoc.mjs"
-  },
-  "files": [
-    "src",
-    "bin",
-    "package.json"
-  ],
-  "engines": {
-    "node": ">=22"
-  },
-  "bin": {
-    "publish-book": "./bin/publish-book"
-  },
-  "scripts": {
-    "test": "node --test test/*.test.mjs"
-  },
+  "private": false,
+  "license": "MIT",
+  "description": "Plan and execute reproducible pandoc projections: one caller-scoped document projection, and a manuscript renderer (ordered parts, CSL-YAML bibliography, CSL style, pdf|html|docx|epub|jats) that returns a build receipt shaped to feed prov-o-provenance-service.",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/red-cup-engineering/project-document-through-pandoc-service.git"
   },
-  "license": "MIT",
+  "exports": {
+    ".": "./src/project-document-through-pandoc.mjs",
+    "./plan-manuscript-projection": "./bin/plan-manuscript-projection.mjs",
+    "./project-manuscript-through-pandoc": "./bin/project-manuscript-through-pandoc.mjs",
+    "./observe-pandoc-toolchain": "./bin/observe-pandoc-toolchain.mjs",
+    "./manuscript-plan": "./src/manuscript-plan.mjs",
+    "./manuscript-project": "./src/manuscript-project.mjs",
+    "./pandoc-toolchain": "./src/pandoc-toolchain.mjs"
+  },
+  "bin": {
+    "publish-book": "./bin/publish-book",
+    "plan-manuscript-projection": "./bin/plan-manuscript-projection.mjs",
+    "project-manuscript-through-pandoc": "./bin/project-manuscript-through-pandoc.mjs",
+    "observe-pandoc-toolchain": "./bin/observe-pandoc-toolchain.mjs",
+    "render-manuscript": "./bin/render-manuscript.mjs"
+  },
+  "files": [
+    "src",
+    "bin",
+    "data/records/offers",
+    ".github",
+    "LICENSE",
+    "README.md",
+    "package.json"
+  ],
+  "scripts": {
+    "test": "node --test test/*.test.mjs"
+  },
+  "dependencies": {
+    "@red-cup-engineering/javascript-node-services-section": "0.3.2"
+  },
+  "engines": {
+    "node": ">=24.2.0"
+  },
   "funding": {
     "type": "individual",
     "url": "https://github.com/561-group/.github/blob/main/TIPS.md"

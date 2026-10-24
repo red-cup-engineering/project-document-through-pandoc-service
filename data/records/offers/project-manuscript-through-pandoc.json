@@ -1,0 +1,184 @@
+{
+  "name": "Manuscript Rendering",
+  "gateway": "manuscript",
+  "gatewayPackageName": "@red-cup-engineering/project-document-through-pandoc-service",
+  "section": "lib/emsenn/services/561-group/services/engineering-services-section/services/computer-engineering-services-section/services/computer-data-engineering-services-section/services/computer-content-engineering-services-section/services/computer-documents-engineering-services-section/services/pandoc-engineering-services-section/services/project-document-through-pandoc-service",
+  "operation": "project-manuscript-through-pandoc",
+  "origin": "https://market.561.group",
+  "route": "/v1/project-manuscript-through-pandoc",
+  "method": "POST",
+  "price": "$0.05",
+  "category": "data",
+  "output": {
+    "schema": {
+      "type": "object",
+      "required": [
+        "ok"
+      ],
+      "properties": {
+        "ok": {
+          "type": "boolean"
+        },
+        "receipt": {
+          "type": "object"
+        },
+        "refusal": {
+          "type": "object"
+        }
+      }
+    },
+    "example": {
+      "ok": true,
+      "receipt": {
+        "kind": "manuscript-build-receipt",
+        "version": 1,
+        "toolchain": {
+          "pandoc": {
+            "version": "3.1.3",
+            "versionLine": "pandoc 3.1.3",
+            "features": "-server +lua"
+          }
+        },
+        "sourceDateEpoch": 1700000000,
+        "outputs": [
+          {
+            "format": "html",
+            "path": "build/manuscript.html",
+            "ni": "ni:///sha-256;4BsX_5r3cFZ5L2fFfj0ZCHlbnRrkz-ckIdCig4mRt0A",
+            "bytes": 4096,
+            "mediaType": "text/html",
+            "reproducibility": "byte-identical"
+          }
+        ],
+        "provenance": {
+          "agents": [
+            {
+              "id": "pandoc",
+              "name": "pandoc 3.1.3",
+              "kind": "software"
+            }
+          ],
+          "activities": [],
+          "entities": []
+        }
+      }
+    }
+  },
+  "framings": [
+    {
+      "key": "default",
+      "title": "Manuscript Rendering",
+      "description": "Render a manuscript through real pandoc under a pinned SOURCE_DATE_EPOCH and return a build receipt: pandoc and TeX versions, argv, ni: addresses of every input and output, and a provenance fragment for PROV-O. Needs a node host with pandoc.",
+      "tags": [
+        "pandoc",
+        "manuscript",
+        "build-receipt",
+        "provenance"
+      ],
+      "serviceName": "manuscript-through-pandoc"
+    }
+  ],
+  "ledgerAccount": "Income:Sales:X402:Manuscript",
+  "markets": [
+    "x402-bazaar",
+    "402index",
+    "house-capability-market",
+    "house-seller-catalog"
+  ],
+  "compute": {
+    "package": "@red-cup-engineering/project-document-through-pandoc-service",
+    "subpath": "./project-manuscript-through-pandoc",
+    "export": "projectManuscriptThroughPandoc",
+    "args": [
+      "body"
+    ]
+  },
+  "runtime": "node",
+  "saleStatus": "held",
+  "seller": {
+    "enterprise": "engineering",
+    "entity": "561-group-llc",
+    "record": {
+      "path": "lib/emsenn/services/561-group/services/engineering-services-section/lib/agency/enterprises/engineering.json",
+      "sha256": "6af4ed9d1e4612b0383267e7ffe0ad028c52164ee3c5136110d434384a29c39f"
+    }
+  },
+  "resources": [
+    "CPU and disk: one pandoc process per output format",
+    "A host with pandoc and, for PDF, TeX Live"
+  ],
+  "bodyExample": {
+    "parts": [
+      "manuscript/00-intro.md",
+      "manuscript/01-results.md"
+    ],
+    "metadataFile": "manuscript/metadata.yaml",
+    "bibliography": "references.yaml",
+    "cslStyle": "styles/minimal.csl",
+    "formats": [
+      "html",
+      "docx"
+    ],
+    "sourceDateEpoch": 1700000000,
+    "toc": true
+  },
+  "bodySchema": {
+    "type": "object",
+    "required": [
+      "parts",
+      "formats",
+      "sourceDateEpoch"
+    ],
+    "properties": {
+      "rootDir": {
+        "type": "string"
+      },
+      "parts": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "metadataFile": {
+        "type": "string"
+      },
+      "bibliography": {
+        "type": "string"
+      },
+      "cslStyle": {
+        "type": "string"
+      },
+      "formats": {
+        "type": "array",
+        "items": {
+          "enum": [
+            "pdf",
+            "html",
+            "docx",
+            "epub",
+            "jats"
+          ]
+        }
+      },
+      "sourceDateEpoch": {
+        "type": "integer"
+      },
+      "pdfEngine": {
+        "enum": [
+          "xelatex",
+          "lualatex",
+          "pdflatex"
+        ]
+      },
+      "numberSections": {
+        "type": "boolean"
+      },
+      "toc": {
+        "type": "boolean"
+      },
+      "citeproc": {
+        "type": "boolean"
+      }
+    }
+  }
+}

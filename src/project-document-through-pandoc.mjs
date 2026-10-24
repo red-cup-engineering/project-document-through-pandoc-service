@@ -41,3 +41,8 @@ export function projectDocumentThroughPandoc(plan) {
   if (result.status !== 0) throw new Error(`${plan.command} failed (${result.status}): ${(result.stderr || result.stdout || "no diagnostic").trim()}`);
   return Object.freeze({ kind: "pandoc-document-projection-receipt", plan, status: "projected", stdout: result.stdout ?? "" });
 }
+
+// The manuscript renderer: ordered parts, CSL-YAML bibliography and CSL style to pdf|html|docx|epub|jats.
+export { planManuscriptProjection, FORMATS, PDF_ENGINES, REPRODUCIBILITY } from "./manuscript-plan.mjs";
+export { projectManuscriptThroughPandoc } from "./manuscript-project.mjs";
+export { observePandocToolchain } from "./pandoc-toolchain.mjs";

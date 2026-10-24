@@ -1,0 +1,46 @@
+name: Render manuscript
+description: >-
+  Render a Markdown manuscript (ordered parts, metadata file, CSL-YAML bibliography, CSL style) to
+  pdf, html, docx, epub and jats with a pinned pandoc and TeX Live, and write a build receipt of
+  versions, argv and ni: addresses. The toolchain is the container image named by `image`, pinned
+  by digest; actions are pinned by commit SHA.
+inputs:
+  request:
+    description: Path (relative to the workspace) of a JSON manuscript request, as accepted by planManuscriptProjection.
+    required: true
+  receipt:
+    description: Where to write the build receipt JSON, relative to the workspace.
+    default: build/receipt.json
+  image:
+    description: Container image, pinned by digest, providing pandoc and TeX Live (entrypoint is overridden per program).
+    default: pandoc/latex:3.11.0.0-alpine@sha256:cdbf139f607237498b412b3aa051008311d69b88006ab47550efba357af3b277
+  source-date-epoch:
+    description: Seconds since the epoch to stamp into outputs. Empty means the commit time of HEAD.
+    default: ""
+outputs:
+  receipt:
+    description: Workspace-relative path of the build receipt.
+    value: ${{ steps.render.outputs.receipt }}
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+      with:
+        node-version: "24.2.0"
+    - name: Pull the pinned toolchain image
+      shell: bash
+      run: docker pull "${{ inputs.image }}"
+    - name: Render
+      id: render
+      shell: bash
+      env:
+        REQUEST: ${{ inputs.request }}
+        RECEIPT: ${{ inputs.receipt }}
+        IMAGE: ${{ inputs.image }}
+        EPOCH: ${{ inputs.source-date-epoch }}
+      run: |
+        set -euo pipefail
+        epoch="${EPOCH:-$(git log -1 --format=%ct)}"
+        node "${GITHUB_ACTION_PATH}/../../../bin/render-manuscript.mjs" \
+          --request "$REQUEST" --receipt "$RECEIPT" --docker-image "$IMAGE" --source-date-epoch "$epoch"
+        echo "receipt=$RECEIPT" >> "$GITHUB_OUTPUT"
