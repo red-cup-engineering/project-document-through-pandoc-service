@@ -27,6 +27,7 @@
   },
   "files": [
     "src",
+    "filters",
     "bin",
     "data/records/offers",
     ".github",

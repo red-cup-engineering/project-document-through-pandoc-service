@@ -8,6 +8,8 @@ export const manuscriptRequestSchema = {
     rootDir: { type: "string", minLength: 1 },
     parts: { type: "array", minItems: 1, items: { type: "string", minLength: 1 } },
     metadataFile: { type: "string", minLength: 1 },
+    metadataFiles: { type: "array", items: { type: "string", minLength: 1 }, description: "Further metadata files, read in order after metadataFile (later keys win)." },
+    filters: { type: "array", items: { enum: ["paper-declarations"] }, description: "Lua filters shipped by this package, run in order before citeproc." },
     bibliography: { type: "string", minLength: 1, description: "A CSL-YAML (or CSL-JSON) bibliography." },
     cslStyle: { type: "string", minLength: 1 },
     formats: { type: "array", minItems: 1, items: { enum: [...FORMATS] } },

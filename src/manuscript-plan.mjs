@@ -1,13 +1,20 @@
+import { readFileSync } from "node:fs";
 /**
  * Plan the projection of one manuscript (ordered Markdown parts, a metadata file, a CSL-YAML
  * bibliography and a CSL style) into publication formats as exact pandoc argument vectors.
  *
- * Everything here is pure: no filesystem, no clock, no process. Paths in a plan are relative
+ * Everything here is pure: no filesystem (beyond this package's own shipped filters, read once at
+ * load), no clock, no process. Paths in a plan are relative
  * to the plan's `rootDir` and pandoc is run with that directory as its working directory, so
  * the argument vectors are identical on every machine that builds the same manuscript.
  */
 
 export const PLAN_KIND = "manuscript-projection-plan";
+
+/** Lua filters this package ships, by name: a consumer names one and never carries its code. */
+export const SHIPPED_FILTERS = Object.freeze({
+  "paper-declarations": readFileSync(new URL("../filters/paper-declarations.lua", import.meta.url), "utf8"),
+});
 export const FORMATS = Object.freeze(["pdf", "html", "docx", "epub", "jats"]);
 export const PDF_ENGINES = Object.freeze(["xelatex", "lualatex", "pdflatex"]);
 const JATS_FLAVORS = Object.freeze(["archiving", "publishing", "articleauthoring"]);
@@ -116,6 +123,13 @@ export function planManuscriptProjection(request, ports = {}) {
   if (metadata.ok === false) return metadata;
   if (request.requirePandocVersion !== undefined && !/^[0-9]+(\.[0-9]+)*$/u.test(request.requirePandocVersion)) return refuse("InvalidRequest", "requirePandocVersion must be a dotted version such as 3.1.3");
 
+  const metadataFiles = request.metadataFiles === undefined ? [] : listOf(request.metadataFiles, "metadataFiles");
+  if (!Array.isArray(metadataFiles)) return metadataFiles;
+  for (const path of metadataFiles) if (!isRootRelativePath(path)) return refuse("PathEscapesRoot", `metadata file ${JSON.stringify(path)} must be a relative path inside the root`);
+  const filters = request.filters === undefined ? [] : listOf(request.filters, "filters");
+  if (!Array.isArray(filters)) return filters;
+  for (const name of filters) if (!Object.hasOwn(SHIPPED_FILTERS, name)) return refuse("UnknownFilter", `filter ${JSON.stringify(name)} is not one of ${Object.keys(SHIPPED_FILTERS).join(", ")}`);
+
   const paths = { metadataFile: request.metadataFile, bibliography: request.bibliography, cslStyle: request.cslStyle, referenceDoc: request.referenceDoc, css: request.css };
   for (const [name, value] of Object.entries(paths)) if (value !== undefined && !isRootRelativePath(value)) return refuse("PathEscapesRoot", `${name} ${JSON.stringify(value)} must be a relative path inside the root`);
   for (const path of [...parts, ...resourcePaths, outputDir]) if (!isRootRelativePath(path)) return refuse("PathEscapesRoot", `path ${JSON.stringify(path)} must be a relative path inside the root`);
@@ -132,12 +146,14 @@ export function planManuscriptProjection(request, ports = {}) {
     ...(paths.cslStyle === undefined ? {} : { cslStyle: clean(paths.cslStyle) }),
     ...(paths.referenceDoc === undefined ? {} : { referenceDoc: clean(paths.referenceDoc) }),
     ...(paths.css === undefined ? {} : { css: clean(paths.css) }),
+    ...(metadataFiles.length === 0 ? {} : { metadataFiles: metadataFiles.map(clean) }),
     resourcePaths: resourcePaths.map(clean),
   };
 
   if (typeof ports.exists === "function") {
     const named = [
       ...inputs.parts.map((path) => ["MissingPart", "manuscript part", path]),
+      ...(inputs.metadataFiles ?? []).map((path) => ["MissingMetadata", "metadata file", path]),
       ...[["MissingMetadata", "metadata file", inputs.metadataFile], ["MissingBibliography", "bibliography", inputs.bibliography], ["MissingStyle", "CSL style", inputs.cslStyle], ["MissingReferenceDoc", "reference document", inputs.referenceDoc], ["MissingStylesheet", "stylesheet", inputs.css]].filter((entry) => entry[2] !== undefined),
     ];
     for (const [reason, label, path] of named) if (!ports.exists(path)) return refuse(reason, `${label} ${path} does not exist under ${rootDir}`);
@@ -148,20 +164,27 @@ export function planManuscriptProjection(request, ports = {}) {
     `--from=${from}`,
     "--standalone",
     ...(inputs.metadataFile === undefined ? [] : [`--metadata-file=${inputs.metadataFile}`]),
+    ...(inputs.metadataFiles ?? []).map((path) => `--metadata-file=${path}`),
     ...Object.entries(metadata).sort(([a], [b]) => (a < b ? -1 : 1)).map(([key, value]) => `--metadata=${key}:${value}`),
     ...(date === undefined ? [] : [`--metadata=date:${date}`]),
     ...Object.entries(variables).sort(([a], [b]) => (a < b ? -1 : 1)).map(([key, value]) => `--variable=${key}:${value}`),
   ];
+  const supportFiles = [], outputs = [];
+  const filterPaths = filters.map((name) => {
+    const path = `${cleanOutputDir === "." ? "" : `${cleanOutputDir}/`}.filters/${name}.lua`;
+    supportFiles.push({ path, role: "support", mediaType: "text/x-lua", content: SHIPPED_FILTERS[name] });
+    return path;
+  });
   const tail = [
     ...(numberSections ? ["--number-sections"] : []),
     ...(toc ? ["--toc", ...(tocDepth === undefined ? [] : [`--toc-depth=${tocDepth}`])] : []),
     `--resource-path=${inputs.resourcePaths.join(":")}`,
     ...(inputs.bibliography === undefined ? [] : [`--bibliography=${inputs.bibliography}`]),
     ...(inputs.cslStyle === undefined ? [] : [`--csl=${inputs.cslStyle}`]),
+    ...filterPaths.map((path) => `--lua-filter=${path}`),
     ...(citeproc ? ["--citeproc"] : []),
   ];
 
-  const supportFiles = [], outputs = [];
   for (const format of formats) {
     const output = `${cleanOutputDir === "." ? "" : `${cleanOutputDir}/`}${basename}.${OUTPUT[format].extension}`;
     const specific = [];

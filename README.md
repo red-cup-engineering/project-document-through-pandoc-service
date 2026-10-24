@@ -235,3 +235,27 @@ bin/publish-book --source manuscript.md --outdir dist --basename paper --math-si
 For a caller that supplies an existing Pandoc projection plan, set `reader: "markdown+tex_math_single_backslash"` on `planPandocDocumentProjection`. Default behavior for previously supported manuscripts is unchanged. An unknown or injected reader is refused. The CLI supplies the same reader to HTML **and** PDF; one output cannot silently interpret math differently from the other.
 
 This repairs a **fabrication** option in the original Red Cup producer, not a DOI, license, editorial admission, public release, or ActivityPub syndication. The existing research-document metadata, Math/Lean and Causeway publication owners retain their responsibilities. The CLI test suite includes valid/default/refusal cases with a fake Pandoc; actual conversion still requires an independently installed Pandoc/TeX host and publication receiving.
+
+## Shipped filters and layered metadata
+
+A consumer repository names filters; it never carries their code. This matters
+for Science repositories, which by house rule hold knowledge and data only.
+
+- `filters: ["paper-declarations"]` adds `filters/paper-declarations.lua`. The
+  filter renders a `paper.yaml` (the schema of
+  `@red-cup-engineering/research-release-metadata-service`) into the document:
+  - the author block
+  - authorship, contributor and AI disclosures, and acknowledgements
+  - ethics, funding and conflicts of interest
+  - the CARE statement and data and code availability
+
+  The declarations go before the section holding the `#refs` bibliography. The
+  plan materializes the filter as a support file under `<outputDir>/.filters/`,
+  so it works the same inside a container, and runs it before `--citeproc`.
+- `metadataFiles: [...]` reads further metadata files in order after
+  `metadataFile`; later keys win. A paper keeps citation metadata in
+  `paper.yaml` and render-only settings, such as fonts, `ethics` and
+  `conflicts-of-interest`, in a second file.
+
+`node test/filters.test.mjs` covers both features, including a real-pandoc
+render of the declarations.
