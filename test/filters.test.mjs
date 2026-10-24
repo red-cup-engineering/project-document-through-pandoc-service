@@ -2,10 +2,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { planManuscriptProjection, SHIPPED_FILTERS } from "../src/manuscript-plan.mjs";
+import { nodePorts } from "../src/ports.mjs";
 
 const base = { parts: ["paper.md"], formats: ["html"], sourceDateEpoch: 1700000000, citeproc: false };
 
@@ -51,6 +52,16 @@ test("real pandoc: paper-declarations renders authorship, CARE and funding befor
     const out = run.stdout;
     for (const expected of ["Declarations", "Ada Lovelace", "An AI system.", "Anonymous contributor", "Agency, award A-1", "collective benefit", "CC-BY-4.0"]) assert.ok(out.includes(expected), expected);
     assert.ok(out.indexOf("Declarations") < out.indexOf("Bibliography"), "declarations precede the bibliography section");
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("ports: writeFile creates the support file's parent directories", () => {
+  const root = mkdtempSync(join(tmpdir(), "ports-"));
+  try {
+    nodePorts(root).writeFile("build/.filters/x.lua", new TextEncoder().encode("-- x"));
+    assert.equal(readFileSync(join(root, "build/.filters/x.lua"), "utf8"), "-- x");
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

@@ -1,7 +1,7 @@
 import { spawn } from "node:child_process";
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 
 /** RFC 6920 name of bytes: ni:///sha-256;<base64url digest>. Equal to the house makeNiUri (see the conformance vectors in test/). */
 export function niOf(bytes) {
@@ -37,7 +37,8 @@ export function nodePorts(rootDir = ".") {
     runPandoc: ({ command = "pandoc", argv, env }) => runProgram({ command, argv, cwd: rootDir, env }),
     exists: (path) => existsSync(at(path)),
     readFile: (path) => new Uint8Array(readFileSync(at(path))),
-    writeFile: (path, bytes) => writeFileSync(at(path), bytes),
+    // Support files may sit in subdirectories of the output directory (shipped filters in .filters/).
+    writeFile: (path, bytes) => { mkdirSync(dirname(at(path)), { recursive: true }); writeFileSync(at(path), bytes); },
     mkdir: (path) => mkdirSync(at(path), { recursive: true }),
     readdir: (path) => readdirSync(at(path), { withFileTypes: true }).map((entry) => ({ name: entry.name, directory: entry.isDirectory() })),
     now: () => new Date(),
