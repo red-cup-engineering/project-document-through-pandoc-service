@@ -126,6 +126,9 @@ export function planManuscriptProjection(request, ports = {}) {
   const metadataFiles = request.metadataFiles === undefined ? [] : listOf(request.metadataFiles, "metadataFiles");
   if (!Array.isArray(metadataFiles)) return metadataFiles;
   for (const path of metadataFiles) if (!isRootRelativePath(path)) return refuse("PathEscapesRoot", `metadata file ${JSON.stringify(path)} must be a relative path inside the root`);
+  const headerIncludes = request.headerIncludes === undefined ? [] : listOf(request.headerIncludes, "headerIncludes");
+  if (!Array.isArray(headerIncludes)) return headerIncludes;
+  if (headerIncludes.length > 0 && !formats.includes("pdf")) return refuse("InvalidRequest", "headerIncludes applies to pdf output only");
   const filters = request.filters === undefined ? [] : listOf(request.filters, "filters");
   if (!Array.isArray(filters)) return filters;
   for (const name of filters) if (!Object.hasOwn(SHIPPED_FILTERS, name)) return refuse("UnknownFilter", `filter ${JSON.stringify(name)} is not one of ${Object.keys(SHIPPED_FILTERS).join(", ")}`);
@@ -190,7 +193,9 @@ export function planManuscriptProjection(request, ports = {}) {
     const specific = [];
     if (format === "pdf") {
       const header = `${cleanOutputDir === "." ? "" : `${cleanOutputDir}/`}.reproducibility-${pdfEngine}.tex`;
-      supportFiles.push({ path: header, role: "support", mediaType: "application/x-tex", content: reproducibilityHeader(pdfEngine) });
+      // --include-in-header replaces any header-includes from metadata, so a paper's own header lines travel here.
+      const content = [reproducibilityHeader(pdfEngine), ...headerIncludes].join("\n").replace(/\n*$/u, "\n");
+      supportFiles.push({ path: header, role: "support", mediaType: "application/x-tex", content });
       specific.push("--to=pdf", `--pdf-engine=${pdfEngine}`, `--include-in-header=${header}`);
     } else if (format === "html") {
       specific.push("--to=html5", ...(inputs.css === undefined ? [] : [`--css=${inputs.css}`]), ...(embedResources ? ["--embed-resources"] : []));

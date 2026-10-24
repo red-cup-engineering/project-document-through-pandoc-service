@@ -9,6 +9,7 @@ export const manuscriptRequestSchema = {
     parts: { type: "array", minItems: 1, items: { type: "string", minLength: 1 } },
     metadataFile: { type: "string", minLength: 1 },
     metadataFiles: { type: "array", items: { type: "string", minLength: 1 }, description: "Further metadata files, read in order after metadataFile (later keys win)." },
+    headerIncludes: { type: "array", items: { type: "string" }, description: "LaTeX lines for the PDF header, appended after the reproducibility header (metadata header-includes would be replaced by it)." },
     filters: { type: "array", items: { enum: ["paper-declarations"] }, description: "Lua filters shipped by this package, run in order before citeproc." },
     bibliography: { type: "string", minLength: 1, description: "A CSL-YAML (or CSL-JSON) bibliography." },
     cslStyle: { type: "string", minLength: 1 },

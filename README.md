@@ -259,3 +259,7 @@ for Science repositories, which by house rule hold knowledge and data only.
 
 `node test/filters.test.mjs` covers both features, including a real-pandoc
 render of the declarations.
+- `headerIncludes: [...]` adds LaTeX lines to the PDF header, after the
+  reproducibility header. Pandoc's `--include-in-header` replaces metadata
+  `header-includes`, so a paper's own header lines (a `\definecolor`, a
+  package) must be passed this way.

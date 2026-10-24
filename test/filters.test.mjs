@@ -66,3 +66,10 @@ test("ports: writeFile creates the support file's parent directories", () => {
     rmSync(root, { recursive: true, force: true });
   }
 });
+
+test("plan: headerIncludes are appended to the PDF reproducibility header and refused without pdf", () => {
+  const result = planManuscriptProjection({ ...base, formats: ["pdf"], headerIncludes: ["\\definecolor{x}{HTML}{2A78D6}"] });
+  const header = result.plan.supportFiles.find((file) => file.path.endsWith(".reproducibility-xelatex.tex"));
+  assert.ok(header.content.endsWith("\\definecolor{x}{HTML}{2A78D6}\n"));
+  assert.equal(planManuscriptProjection({ ...base, headerIncludes: ["x"] }).refusal.reason, "InvalidRequest");
+});
