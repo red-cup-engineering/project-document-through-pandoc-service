@@ -39,7 +39,8 @@
     "test": "node --test test/*.test.mjs"
   },
   "dependencies": {
-    "@red-cup-engineering/javascript-node-services-section": "0.3.2"
+    "@red-cup-engineering/javascript-node-services-section": "0.3.2",
+    "@red-cup-engineering/uri-services-section": "0.1.3"
   },
   "engines": {
     "node": ">=24.2.0"
