@@ -12,5 +12,6 @@ export const operationDefinition = {
   outputSchema: resultSchema,
   operation: (planOrRequest) => projectManuscriptThroughPandoc(planOrRequest),
 };
+export const operation = operationDefinition;
 
 if (import.meta.main) await runCommand(operationDefinition);

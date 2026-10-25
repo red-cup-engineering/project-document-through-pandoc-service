@@ -47,5 +47,306 @@
   "funding": {
     "type": "individual",
     "url": "https://github.com/561-group/.github/blob/main/TIPS.md"
+  },
+  "x-market": {
+    "gateway": "manuscript",
+    "offers": [
+      {
+        "operation": "observe-pandoc-toolchain",
+        "subpath": "./observe-pandoc-toolchain",
+        "export": "observePandocToolchain",
+        "route": "/v1/observe-pandoc-toolchain",
+        "method": "POST",
+        "price": {
+          "amount": "$0.001"
+        },
+        "framings": [
+          {
+            "key": "default",
+            "title": "Pandoc Toolchain Observation",
+            "description": "Observe the installed pandoc version and, for a requested PDF engine (xelatex, lualatex, pdflatex), its version line and TeX Live release, so a build can record or pin the exact toolchain.",
+            "tags": [
+              "pandoc",
+              "toolchain",
+              "tex",
+              "reproducible"
+            ],
+            "serviceName": "observe-pandoc-toolchain"
+          }
+        ],
+        "ledgerAccount": "Income:Sales:X402:Manuscript",
+        "markets": [
+          "x402-bazaar",
+          "402index",
+          "house-capability-market",
+          "house-seller-catalog"
+        ],
+        "saleStatus": "held",
+        "seller": {
+          "enterprise": "engineering"
+        },
+        "category": "data",
+        "resources": [
+          "A host with pandoc"
+        ],
+        "runtime": "node",
+        "examples": {
+          "input": {
+            "pdfEngine": "xelatex"
+          },
+          "output": {
+            "ok": true,
+            "pandoc": {
+              "version": "3.1.3",
+              "versionLine": "pandoc 3.1.3",
+              "features": "-server +lua"
+            },
+            "pdfEngine": {
+              "name": "xelatex",
+              "versionLine": "XeTeX 3.141592653-2.6-0.999995 (TeX Live 2023/Debian)",
+              "texLive": "2023/Debian",
+              "version": "3.141592653-2.6-0.999995"
+            }
+          }
+        }
+      },
+      {
+        "operation": "plan-manuscript-projection",
+        "subpath": "./plan-manuscript-projection",
+        "export": "planManuscriptProjection",
+        "route": "/v1/plan-manuscript-projection",
+        "method": "POST",
+        "price": {
+          "amount": "$0.002"
+        },
+        "framings": [
+          {
+            "key": "default",
+            "title": "Manuscript Projection Plan",
+            "description": "Plan the reproducible pandoc rendering of an ordered Markdown manuscript with metadata, CSL-YAML bibliography and CSL style to pdf, html, docx, epub or jats: exact argv per output, SOURCE_DATE_EPOCH environment, reproducibility class per format. Refuses missing parts or style.",
+            "tags": [
+              "pandoc",
+              "manuscript",
+              "citeproc",
+              "reproducible"
+            ],
+            "serviceName": "plan-manuscript-projection"
+          }
+        ],
+        "ledgerAccount": "Income:Sales:X402:Manuscript",
+        "markets": [
+          "x402-bazaar",
+          "402index",
+          "house-capability-market",
+          "house-seller-catalog"
+        ],
+        "saleStatus": "held",
+        "seller": {
+          "enterprise": "engineering"
+        },
+        "category": "data",
+        "resources": [
+          "CPU: pure planning, no files read"
+        ],
+        "runtime": "node",
+        "examples": {
+          "input": {
+            "parts": [
+              "manuscript/00-intro.md",
+              "manuscript/01-results.md"
+            ],
+            "metadataFile": "manuscript/metadata.yaml",
+            "bibliography": "references.yaml",
+            "cslStyle": "styles/minimal.csl",
+            "formats": [
+              "html",
+              "docx"
+            ],
+            "sourceDateEpoch": 1700000000,
+            "toc": true
+          },
+          "output": {
+            "ok": true,
+            "plan": {
+              "kind": "manuscript-projection-plan",
+              "version": 1,
+              "rootDir": ".",
+              "command": "pandoc",
+              "env": {
+                "FORCE_SOURCE_DATE": "1",
+                "SOURCE_DATE_EPOCH": "1700000000",
+                "TZ": "UTC"
+              },
+              "sourceDateEpoch": 1700000000,
+              "outputDir": "build",
+              "inputs": {
+                "parts": [
+                  "manuscript/00-intro.md",
+                  "manuscript/01-results.md"
+                ],
+                "metadataFile": "manuscript/metadata.yaml",
+                "bibliography": "references.yaml",
+                "cslStyle": "styles/minimal.csl",
+                "resourcePaths": [
+                  "."
+                ]
+              },
+              "supportFiles": [],
+              "outputs": [
+                {
+                  "format": "html",
+                  "path": "build/manuscript.html",
+                  "mediaType": "text/html",
+                  "reproducibility": {
+                    "level": "byte-identical",
+                    "requires": [
+                      "same pandoc version"
+                    ],
+                    "caveats": []
+                  },
+                  "argv": [
+                    "--from=markdown",
+                    "--standalone",
+                    "--metadata-file=manuscript/metadata.yaml",
+                    "--to=html5",
+                    "--toc",
+                    "--resource-path=.",
+                    "--bibliography=references.yaml",
+                    "--csl=styles/minimal.csl",
+                    "--citeproc",
+                    "--output=build/manuscript.html",
+                    "manuscript/00-intro.md",
+                    "manuscript/01-results.md"
+                  ]
+                },
+                {
+                  "format": "docx",
+                  "path": "build/manuscript.docx",
+                  "mediaType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                  "reproducibility": {
+                    "level": "byte-identical",
+                    "requires": [
+                      "same pandoc version",
+                      "SOURCE_DATE_EPOCH"
+                    ],
+                    "caveats": [
+                      "core.xml dates and zip entry times come from SOURCE_DATE_EPOCH"
+                    ]
+                  },
+                  "argv": [
+                    "--from=markdown",
+                    "--standalone",
+                    "--metadata-file=manuscript/metadata.yaml",
+                    "--to=docx",
+                    "--toc",
+                    "--resource-path=.",
+                    "--bibliography=references.yaml",
+                    "--csl=styles/minimal.csl",
+                    "--citeproc",
+                    "--output=build/manuscript.docx",
+                    "manuscript/00-intro.md",
+                    "manuscript/01-results.md"
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "operation": "project-manuscript-through-pandoc",
+        "subpath": "./project-manuscript-through-pandoc",
+        "export": "projectManuscriptThroughPandoc",
+        "route": "/v1/project-manuscript-through-pandoc",
+        "method": "POST",
+        "price": {
+          "amount": "$0.05"
+        },
+        "framings": [
+          {
+            "key": "default",
+            "title": "Manuscript Rendering",
+            "description": "Render a manuscript through real pandoc under a pinned SOURCE_DATE_EPOCH and return a build receipt: pandoc and TeX versions, argv, ni: addresses of every input and output, and a provenance fragment for PROV-O. Needs a node host with pandoc.",
+            "tags": [
+              "pandoc",
+              "manuscript",
+              "build-receipt",
+              "provenance"
+            ],
+            "serviceName": "manuscript-through-pandoc"
+          }
+        ],
+        "ledgerAccount": "Income:Sales:X402:Manuscript",
+        "markets": [
+          "x402-bazaar",
+          "402index",
+          "house-capability-market",
+          "house-seller-catalog"
+        ],
+        "saleStatus": "held",
+        "seller": {
+          "enterprise": "engineering"
+        },
+        "category": "data",
+        "resources": [
+          "CPU and disk: one pandoc process per output format",
+          "A host with pandoc and, for PDF, TeX Live"
+        ],
+        "runtime": "node",
+        "examples": {
+          "input": {
+            "parts": [
+              "manuscript/00-intro.md",
+              "manuscript/01-results.md"
+            ],
+            "metadataFile": "manuscript/metadata.yaml",
+            "bibliography": "references.yaml",
+            "cslStyle": "styles/minimal.csl",
+            "formats": [
+              "html",
+              "docx"
+            ],
+            "sourceDateEpoch": 1700000000,
+            "toc": true
+          },
+          "output": {
+            "ok": true,
+            "receipt": {
+              "kind": "manuscript-build-receipt",
+              "version": 1,
+              "toolchain": {
+                "pandoc": {
+                  "version": "3.1.3",
+                  "versionLine": "pandoc 3.1.3",
+                  "features": "-server +lua"
+                }
+              },
+              "sourceDateEpoch": 1700000000,
+              "outputs": [
+                {
+                  "format": "html",
+                  "path": "build/manuscript.html",
+                  "ni": "ni:///sha-256;4BsX_5r3cFZ5L2fFfj0ZCHlbnRrkz-ckIdCig4mRt0A",
+                  "bytes": 4096,
+                  "mediaType": "text/html",
+                  "reproducibility": "byte-identical"
+                }
+              ],
+              "provenance": {
+                "agents": [
+                  {
+                    "id": "pandoc",
+                    "name": "pandoc 3.1.3",
+                    "kind": "software"
+                  }
+                ],
+                "activities": [],
+                "entities": []
+              }
+            }
+          }
+        }
+      }
+    ]
   }
 }
