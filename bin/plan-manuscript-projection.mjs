@@ -13,5 +13,6 @@ export const operationDefinition = {
   outputSchema: resultSchema,
   operation: (request) => planManuscriptProjection(request, { exists: nodePorts(request.rootDir ?? ".").exists }),
 };
+export const operation = operationDefinition;
 
 if (import.meta.main) await runCommand(operationDefinition);

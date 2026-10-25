@@ -12,5 +12,6 @@ export const operationDefinition = {
   outputSchema: resultSchema,
   operation: (request) => observePandocToolchain(request),
 };
+export const operation = operationDefinition;
 
 if (import.meta.main) await runCommand(operationDefinition);
