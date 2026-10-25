@@ -1,11 +1,11 @@
 import { spawn } from "node:child_process";
-import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
+import { makeNiUri } from "@red-cup-engineering/uri-services-section/ni-uri";
 
-/** RFC 6920 name of bytes: ni:///sha-256;<base64url digest>. Equal to the house makeNiUri (see the conformance vectors in test/). */
+/** RFC 6920 name of bytes: ni:///sha-256;<base64url digest>, the house makeNiUri (text is named by its UTF-8 bytes). */
 export function niOf(bytes) {
-  return `ni:///sha-256;${createHash("sha256").update(bytes).digest("base64url")}`;
+  return makeNiUri(typeof bytes === "string" ? new TextEncoder().encode(bytes) : bytes);
 }
 
 /**
