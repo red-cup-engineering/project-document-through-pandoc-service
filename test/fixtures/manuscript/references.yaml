@@ -1,0 +1,23 @@
+references:
+- id: smith2020
+  type: article-journal
+  title: On Lenticules
+  author:
+  - family: Smith
+    given: Sam
+  container-title: Journal of Eyes
+  volume: 3
+  page: 1-10
+  issued:
+    date-parts:
+    - - 2020
+- id: jones2021
+  type: book
+  title: Corneal Tissue Handbook
+  author:
+  - family: Jones
+    given: Jo
+  publisher: Eye Press
+  issued:
+    date-parts:
+    - - 2021

@@ -1,0 +1,36 @@
+import { FORMATS, PDF_ENGINES } from "./manuscript-plan.mjs";
+
+/** The request `planManuscriptProjection` takes, as the JSON Schema the command faces and market offers publish. */
+export const manuscriptRequestSchema = {
+  type: "object",
+  required: ["parts", "formats", "sourceDateEpoch"],
+  properties: {
+    rootDir: { type: "string", minLength: 1 },
+    parts: { type: "array", minItems: 1, items: { type: "string", minLength: 1 } },
+    metadataFile: { type: "string", minLength: 1 },
+    metadataFiles: { type: "array", items: { type: "string", minLength: 1 }, description: "Further metadata files, read in order after metadataFile (later keys win)." },
+    headerIncludes: { type: "array", items: { type: "string" }, description: "LaTeX lines for the PDF header, appended after the reproducibility header (metadata header-includes would be replaced by it)." },
+    filters: { type: "array", items: { enum: ["paper-declarations"] }, description: "Lua filters shipped by this package, run in order before citeproc." },
+    bibliography: { type: "string", minLength: 1, description: "A CSL-YAML (or CSL-JSON) bibliography." },
+    cslStyle: { type: "string", minLength: 1 },
+    formats: { type: "array", minItems: 1, items: { enum: [...FORMATS] } },
+    sourceDateEpoch: { type: "integer", minimum: 0 },
+    outputDir: { type: "string", minLength: 1 },
+    basename: { type: "string", minLength: 1 },
+    pdfEngine: { enum: [...PDF_ENGINES] },
+    resourcePaths: { type: "array", items: { type: "string", minLength: 1 } },
+    citeproc: { type: "boolean" },
+    numberSections: { type: "boolean" },
+    toc: { type: "boolean" },
+    tocDepth: { type: "integer", minimum: 1, maximum: 6 },
+    from: { type: "string", minLength: 1 },
+    date: { type: "string", minLength: 1 },
+    referenceDoc: { type: "string", minLength: 1 },
+    css: { type: "string", minLength: 1 },
+    embedResources: { type: "boolean" },
+    jatsFlavor: { enum: ["archiving", "publishing", "articleauthoring"] },
+    variables: { type: "object" },
+    metadata: { type: "object" },
+    requirePandocVersion: { type: "string", pattern: "^[0-9]+(\\.[0-9]+)*$" },
+  },
+};

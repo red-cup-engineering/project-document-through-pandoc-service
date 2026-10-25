@@ -1,0 +1,233 @@
+{
+  "name": "Manuscript Projection Plan",
+  "gateway": "manuscript",
+  "gatewayPackageName": "@red-cup-engineering/project-document-through-pandoc-service",
+  "section": "lib/emsenn/services/561-group/services/engineering-services-section/services/computer-engineering-services-section/services/computer-data-engineering-services-section/services/computer-content-engineering-services-section/services/computer-documents-engineering-services-section/services/pandoc-engineering-services-section/services/project-document-through-pandoc-service",
+  "operation": "plan-manuscript-projection",
+  "origin": "https://market.561.group",
+  "route": "/v1/plan-manuscript-projection",
+  "method": "POST",
+  "price": "$0.002",
+  "category": "data",
+  "output": {
+    "schema": {
+      "type": "object",
+      "required": [
+        "ok"
+      ],
+      "properties": {
+        "ok": {
+          "type": "boolean"
+        },
+        "plan": {
+          "type": "object"
+        },
+        "refusal": {
+          "type": "object"
+        }
+      }
+    },
+    "example": {
+      "ok": true,
+      "plan": {
+        "kind": "manuscript-projection-plan",
+        "version": 1,
+        "rootDir": ".",
+        "command": "pandoc",
+        "env": {
+          "FORCE_SOURCE_DATE": "1",
+          "SOURCE_DATE_EPOCH": "1700000000",
+          "TZ": "UTC"
+        },
+        "sourceDateEpoch": 1700000000,
+        "outputDir": "build",
+        "inputs": {
+          "parts": [
+            "manuscript/00-intro.md",
+            "manuscript/01-results.md"
+          ],
+          "metadataFile": "manuscript/metadata.yaml",
+          "bibliography": "references.yaml",
+          "cslStyle": "styles/minimal.csl",
+          "resourcePaths": [
+            "."
+          ]
+        },
+        "supportFiles": [],
+        "outputs": [
+          {
+            "format": "html",
+            "path": "build/manuscript.html",
+            "mediaType": "text/html",
+            "reproducibility": {
+              "level": "byte-identical",
+              "requires": [
+                "same pandoc version"
+              ],
+              "caveats": []
+            },
+            "argv": [
+              "--from=markdown",
+              "--standalone",
+              "--metadata-file=manuscript/metadata.yaml",
+              "--to=html5",
+              "--toc",
+              "--resource-path=.",
+              "--bibliography=references.yaml",
+              "--csl=styles/minimal.csl",
+              "--citeproc",
+              "--output=build/manuscript.html",
+              "manuscript/00-intro.md",
+              "manuscript/01-results.md"
+            ]
+          },
+          {
+            "format": "docx",
+            "path": "build/manuscript.docx",
+            "mediaType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "reproducibility": {
+              "level": "byte-identical",
+              "requires": [
+                "same pandoc version",
+                "SOURCE_DATE_EPOCH"
+              ],
+              "caveats": [
+                "core.xml dates and zip entry times come from SOURCE_DATE_EPOCH"
+              ]
+            },
+            "argv": [
+              "--from=markdown",
+              "--standalone",
+              "--metadata-file=manuscript/metadata.yaml",
+              "--to=docx",
+              "--toc",
+              "--resource-path=.",
+              "--bibliography=references.yaml",
+              "--csl=styles/minimal.csl",
+              "--citeproc",
+              "--output=build/manuscript.docx",
+              "manuscript/00-intro.md",
+              "manuscript/01-results.md"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "framings": [
+    {
+      "key": "default",
+      "title": "Manuscript Projection Plan",
+      "description": "Plan the reproducible pandoc rendering of an ordered Markdown manuscript with metadata, CSL-YAML bibliography and CSL style to pdf, html, docx, epub or jats: exact argv per output, SOURCE_DATE_EPOCH environment, reproducibility class per format. Refuses missing parts or style.",
+      "tags": [
+        "pandoc",
+        "manuscript",
+        "citeproc",
+        "reproducible"
+      ],
+      "serviceName": "plan-manuscript-projection"
+    }
+  ],
+  "ledgerAccount": "Income:Sales:X402:Manuscript",
+  "markets": [
+    "x402-bazaar",
+    "402index",
+    "house-capability-market",
+    "house-seller-catalog"
+  ],
+  "compute": {
+    "package": "@red-cup-engineering/project-document-through-pandoc-service",
+    "subpath": "./plan-manuscript-projection",
+    "export": "planManuscriptProjection",
+    "args": [
+      "body"
+    ]
+  },
+  "runtime": "node",
+  "saleStatus": "held",
+  "seller": {
+    "enterprise": "engineering",
+    "entity": "561-group-llc",
+    "record": {
+      "path": "lib/emsenn/services/561-group/services/engineering-services-section/lib/agency/enterprises/engineering.json",
+      "sha256": "6af4ed9d1e4612b0383267e7ffe0ad028c52164ee3c5136110d434384a29c39f"
+    }
+  },
+  "resources": [
+    "CPU: pure planning, no files read"
+  ],
+  "bodyExample": {
+    "parts": [
+      "manuscript/00-intro.md",
+      "manuscript/01-results.md"
+    ],
+    "metadataFile": "manuscript/metadata.yaml",
+    "bibliography": "references.yaml",
+    "cslStyle": "styles/minimal.csl",
+    "formats": [
+      "html",
+      "docx"
+    ],
+    "sourceDateEpoch": 1700000000,
+    "toc": true
+  },
+  "bodySchema": {
+    "type": "object",
+    "required": [
+      "parts",
+      "formats",
+      "sourceDateEpoch"
+    ],
+    "properties": {
+      "rootDir": {
+        "type": "string"
+      },
+      "parts": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "metadataFile": {
+        "type": "string"
+      },
+      "bibliography": {
+        "type": "string"
+      },
+      "cslStyle": {
+        "type": "string"
+      },
+      "formats": {
+        "type": "array",
+        "items": {
+          "enum": [
+            "pdf",
+            "html",
+            "docx",
+            "epub",
+            "jats"
+          ]
+        }
+      },
+      "sourceDateEpoch": {
+        "type": "integer"
+      },
+      "pdfEngine": {
+        "enum": [
+          "xelatex",
+          "lualatex",
+          "pdflatex"
+        ]
+      },
+      "numberSections": {
+        "type": "boolean"
+      },
+      "toc": {
+        "type": "boolean"
+      },
+      "citeproc": {
+        "type": "boolean"
+      }
+    }
+  }
+}
