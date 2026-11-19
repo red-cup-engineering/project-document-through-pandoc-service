@@ -30,8 +30,8 @@ if (values["docker-image"] !== undefined) {
 
 const result = await projectManuscriptThroughPandoc(request, ports);
 const output = result.ok ? result.receipt : result;
-const receiptPath = resolve(values.receipt);
-mkdirSync(dirname(receiptPath), { recursive: true });
-writeFileSync(receiptPath, `${JSON.stringify(output, null, 2)}\n`);
+const recordPath = resolve(values.receipt);
+mkdirSync(dirname(recordPath), { recursive: true });
+writeFileSync(recordPath, `${JSON.stringify(output, null, 2)}\n`);
 console.log(JSON.stringify(result.ok ? { ok: true, receipt: values.receipt, outputs: result.receipt.outputs.map(({ format, path, ni }) => ({ format, path, ni })) } : result));
 process.exitCode = result.ok ? 0 : 1;
