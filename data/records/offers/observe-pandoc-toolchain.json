@@ -1,0 +1,105 @@
+{
+  "name": "Pandoc Toolchain Observation",
+  "gateway": "manuscript",
+  "gatewayPackageName": "@red-cup-engineering/project-document-through-pandoc-service",
+  "section": "lib/emsenn/services/561-group/services/engineering-services-section/services/computer-engineering-services-section/services/computer-data-engineering-services-section/services/computer-content-engineering-services-section/services/computer-documents-engineering-services-section/services/pandoc-engineering-services-section/services/project-document-through-pandoc-service",
+  "operation": "observe-pandoc-toolchain",
+  "origin": "https://market.561.group",
+  "route": "/v1/observe-pandoc-toolchain",
+  "method": "POST",
+  "price": "$0.001",
+  "category": "data",
+  "output": {
+    "schema": {
+      "type": "object",
+      "required": [
+        "ok"
+      ],
+      "properties": {
+        "ok": {
+          "type": "boolean"
+        },
+        "pandoc": {
+          "type": "object"
+        },
+        "pdfEngine": {
+          "type": "object"
+        },
+        "refusal": {
+          "type": "object"
+        }
+      }
+    },
+    "example": {
+      "ok": true,
+      "pandoc": {
+        "version": "3.1.3",
+        "versionLine": "pandoc 3.1.3",
+        "features": "-server +lua"
+      },
+      "pdfEngine": {
+        "name": "xelatex",
+        "versionLine": "XeTeX 3.141592653-2.6-0.999995 (TeX Live 2023/Debian)",
+        "texLive": "2023/Debian",
+        "version": "3.141592653-2.6-0.999995"
+      }
+    }
+  },
+  "framings": [
+    {
+      "key": "default",
+      "title": "Pandoc Toolchain Observation",
+      "description": "Observe the installed pandoc version and, for a requested PDF engine (xelatex, lualatex, pdflatex), its version line and TeX Live release, so a build can record or pin the exact toolchain.",
+      "tags": [
+        "pandoc",
+        "toolchain",
+        "tex",
+        "reproducible"
+      ],
+      "serviceName": "observe-pandoc-toolchain"
+    }
+  ],
+  "ledgerAccount": "Income:Sales:X402:Manuscript",
+  "markets": [
+    "x402-bazaar",
+    "402index",
+    "house-capability-market",
+    "house-seller-catalog"
+  ],
+  "compute": {
+    "package": "@red-cup-engineering/project-document-through-pandoc-service",
+    "subpath": "./observe-pandoc-toolchain",
+    "export": "observePandocToolchain",
+    "args": [
+      "body"
+    ]
+  },
+  "runtime": "node",
+  "saleStatus": "held",
+  "seller": {
+    "enterprise": "engineering",
+    "entity": "561-group-llc",
+    "record": {
+      "path": "lib/emsenn/services/561-group/services/engineering-services-section/lib/agency/enterprises/engineering.json",
+      "sha256": "6af4ed9d1e4612b0383267e7ffe0ad028c52164ee3c5136110d434384a29c39f"
+    }
+  },
+  "resources": [
+    "A host with pandoc"
+  ],
+  "bodyExample": {
+    "pdfEngine": "xelatex"
+  },
+  "bodySchema": {
+    "type": "object",
+    "properties": {
+      "pdfEngine": {
+        "enum": [
+          "xelatex",
+          "lualatex",
+          "pdflatex"
+        ]
+      }
+    }
+  }
+}
