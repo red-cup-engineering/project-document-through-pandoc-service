@@ -37,7 +37,8 @@
   ],
   "dependencies": {
     "@red-cup-engineering/uri-engineering-services-section": "^0.1.7",
-    "@red-cup-engineering/node-js-function-engineering-services-section": "^0.5.4"
+    "@red-cup-engineering/node-js-function-engineering-services-section": "^0.5.4",
+    "@red-cup-engineering/semiotic-content-address-system": "^0.1.7 || 0.1.8-dev.0"
   },
   "engines": {
     "node": ">=24.2.0"

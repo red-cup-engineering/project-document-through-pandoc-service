@@ -1,3 +1,4 @@
+import { compareText } from "@red-cup-engineering/semiotic-content-address-system";
 import { PLAN_KIND, planManuscriptProjection } from "./manuscript-plan.mjs";
 import { observePandocToolchain } from "./pandoc-toolchain.mjs";
 import { nodePorts } from "./ports.mjs";
@@ -7,7 +8,7 @@ const MAX_RESOURCE_FILES = 2000;
 const SKIPPED_DIRECTORIES = new Set([".git", "node_modules"]);
 
 const refuse = (reason, message, extra = {}) => Object.freeze({ ok: false, refusal: Object.freeze({ reason, message }), ...extra });
-const compare = (left, right) => (left < right ? -1 : left > right ? 1 : 0);
+
 
 const MEDIA_TYPES = {
   md: "text/markdown", markdown: "text/markdown", yaml: "application/yaml", yml: "application/yaml", json: "application/json",
@@ -18,7 +19,7 @@ const MEDIA_TYPES = {
 const mediaTypeOf = (path) => MEDIA_TYPES[path.slice(path.lastIndexOf(".") + 1).toLowerCase()] ?? "application/octet-stream";
 
 function walk(directory, outputDir, ports, found) {
-  for (const entry of ports.readdir(directory).sort((a, b) => compare(a.name, b.name))) {
+  for (const entry of ports.readdir(directory).sort((a, b) => compareText(a.name, b.name))) {
     const path = directory === "." ? entry.name : `${directory}/${entry.name}`;
     if (path === outputDir || SKIPPED_DIRECTORIES.has(entry.name)) continue;
     if (entry.directory) walk(path, outputDir, ports, found);
@@ -40,7 +41,7 @@ function inputList(plan, ports) {
     if (root === "." || !ports.exists(root)) continue;
     walk(root, plan.outputDir, ports, resources);
   }
-  for (const path of resources.sort(compare)) add("resource", path);
+  for (const path of resources.sort(compareText)) add("resource", path);
   return items;
 }
 
