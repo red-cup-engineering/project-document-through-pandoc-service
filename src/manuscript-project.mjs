@@ -2,7 +2,7 @@ import { PLAN_KIND, planManuscriptProjection } from "./manuscript-plan.mjs";
 import { observePandocToolchain } from "./pandoc-toolchain.mjs";
 import { nodePorts } from "./ports.mjs";
 
-export const RECORD_KIND = "manuscript-build-receipt";
+export const RECEIPT_KIND = "manuscript-build-receipt";
 const MAX_RESOURCE_FILES = 2000;
 const SKIPPED_DIRECTORIES = new Set([".git", "node_modules"]);
 
@@ -99,7 +99,7 @@ export async function projectManuscriptThroughPandoc(planOrRequest, ports = {}) 
     const invocation = { format: output.format, argv: [plan.command, ...output.argv], env: plan.env, cwd: plan.rootDir, status: result.status, startedAt: began.toISOString(), endedAt: ended.toISOString() };
     invocations.push(invocation);
     if (result.status !== 0 || !io.exists(output.path)) {
-      return refuse("PandocFailed", `pandoc failed for ${output.format} (${result.error ?? `status ${result.status}`}): ${(result.stderr || result.stdout || "no diagnostic").trim().slice(0, 2000)}`, { receipt: { kind: RECORD_KIND, version: 1, toolchain, invocations, outputs } });
+      return refuse("PandocFailed", `pandoc failed for ${output.format} (${result.error ?? `status ${result.status}`}): ${(result.stderr || result.stdout || "no diagnostic").trim().slice(0, 2000)}`, { receipt: { kind: RECEIPT_KIND, version: 1, toolchain, invocations, outputs } });
     }
     const bytes = io.readFile(output.path);
     outputs.push({ format: output.format, path: output.path, id: output.path, ni: io.address(bytes), bytes: bytes.byteLength, mediaType: output.mediaType, reproducibility: output.reproducibility });
@@ -127,7 +127,7 @@ export async function projectManuscriptThroughPandoc(planOrRequest, ports = {}) 
   return Object.freeze({
     ok: true,
     receipt: {
-      kind: RECORD_KIND,
+      kind: RECEIPT_KIND,
       version: 1,
       toolchain: { pandoc: toolchain.pandoc, ...(toolchain.pdfEngine ? { pdfEngine: toolchain.pdfEngine } : {}) },
       sourceDateEpoch: plan.sourceDateEpoch,
